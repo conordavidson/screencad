@@ -28,7 +28,7 @@ const Node: FC<{ node: T.DomNode }> = ({ node }) => {
   return (
     <Tag
       onClick={onClickNode}
-      className={cx('border w-24 h-24', {
+      className={cx('border border-gray-400 w-24 h-24', {
         'border-2': globalState.state.selected.has(node.id),
       })}
     >
@@ -53,8 +53,7 @@ const TreeUi: FC = () => {
 
 const Canvas: FC = () => {
   return (
-    <div className="h-full w-full bg-gray-100">
-      <p>Canvas</p>
+    <div className="h-full w-full bg-gray-100 p-4">
       <TreeUi />
     </div>
   );

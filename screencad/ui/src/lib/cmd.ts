@@ -23,20 +23,29 @@ type HTML_TAG = typeof Constants.HTML_TAGS[number];
 //   }
 // }
 
-type CreateCommands = TagCommands & {
-  parent?: Command<TagCommands>;
-  child?: Command<TagCommands>;
-  sibling?: Command<TagCommands>;
-};
+export type Commands = CommandMenu<RootCommands>;
 
-export type Commands = {
-  create: Command<CreateCommands>;
-  update?: () => void;
-};
-
-type Command<T> = {
+export type Command<T> = {
   (): T;
-  description: string;
+  _description: string;
+  _type: 'COMMAND';
+};
+
+export type CommandMenu<T> = {
+  (): T;
+  _description: string;
+  _type: 'MENU';
+};
+
+type RootCommands = {
+  create: CommandMenu<CreateCommands>;
+  update?: CommandMenu<void>;
+};
+
+type CreateCommands = TagCommands & {
+  parent?: CommandMenu<TagCommands>;
+  child?: CommandMenu<TagCommands>;
+  sibling?: CommandMenu<TagCommands>;
 };
 
 type TagCommands = {
@@ -47,14 +56,14 @@ type Context = {
   globalState: State;
 };
 
-const factory = (context: Context) => {
-  return (): Commands => {
+const factory = (context: Context): Commands => {
+  return makeCommandMenu('Hello :)', () => {
     const {
       globalState: { state, setState },
     } = context;
 
-    const commands: Commands = {
-      create: makeCommand('Create new things', () => {
+    const commands: RootCommands = {
+      create: makeCommandMenu('Create new things', () => {
         const createCommands = {} as CreateCommands;
 
         Constants.HTML_TAGS.forEach((tag) => {
@@ -67,7 +76,7 @@ const factory = (context: Context) => {
         });
 
         withOneSelection(context, (selection) => {
-          createCommands.child = makeCommand(`Insert child node`, () => {
+          createCommands.child = makeCommandMenu(`Insert child node`, () => {
             const childCommands = {} as TagCommands;
 
             Constants.HTML_TAGS.forEach((tag) => {
@@ -85,8 +94,6 @@ const factory = (context: Context) => {
 
         const parent = () => {};
 
-        const child = () => {};
-
         const sibling = () => {};
 
         return createCommands;
@@ -94,15 +101,19 @@ const factory = (context: Context) => {
     };
 
     withSelections(context, (selections) => {
-      commands.update = () => {};
+      commands.update = makeCommandMenu('Update selection', () => {});
     });
 
     return commands;
-  };
+  });
 };
 
-const makeCommand = <T>(description: string, commands: T) => {
-  return Object.assign(commands, { description });
+const makeCommand = <T>(_description: string, commands: T) => {
+  return Object.assign(commands, { _description, _type: 'COMMAND' as const });
+};
+
+const makeCommandMenu = <T>(_description: string, commands: T) => {
+  return Object.assign(commands, { _description, _type: 'MENU' as const });
 };
 
 const withSelections = (context: Context, callback: (selections: Set<string>) => void) => {
