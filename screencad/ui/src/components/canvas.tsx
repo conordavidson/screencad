@@ -1,11 +1,63 @@
 import { FC } from 'react';
 
-const Terminal: FC = () => {
+import cx from 'classnames';
+
+import * as GlobalState from 'lib/globalState';
+import * as T from 'types';
+
+const Node: FC<{ node: T.DomNode }> = ({ node }) => {
+  const globalState = GlobalState.useGlobalState();
+
+  const onClickNode = () => {
+    globalState.setState((state) => {
+      const updatedSelected = new Set(state.selected);
+      if (state.selected.has(node.id)) {
+        updatedSelected.delete(node.id);
+      } else {
+        updatedSelected.add(node.id);
+      }
+      return {
+        ...state,
+        selected: updatedSelected,
+      };
+    });
+  };
+
+  const Tag = node.data.tag;
+
   return (
-    <div className="h-full w-full bg-gray-100">
-      <p>Canvas</p>
+    <Tag
+      onClick={onClickNode}
+      className={cx('border w-24 h-24', {
+        'border-2': globalState.state.selected.has(node.id),
+      })}
+    >
+      {node.children.map((node) => {
+        return <Node key={node.id} node={node} />;
+      })}
+    </Tag>
+  );
+};
+
+const TreeUi: FC = () => {
+  const globalState = GlobalState.useGlobalState();
+
+  return (
+    <div>
+      {globalState.state.tree.map((node) => {
+        return <Node key={node.id} node={node} />;
+      })}
     </div>
   );
 };
 
-export default Terminal;
+const Canvas: FC = () => {
+  return (
+    <div className="h-full w-full bg-gray-100">
+      <p>Canvas</p>
+      <TreeUi />
+    </div>
+  );
+};
+
+export default Canvas;
