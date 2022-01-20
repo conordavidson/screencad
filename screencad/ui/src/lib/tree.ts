@@ -1,35 +1,98 @@
 import { v4 } from 'uuid';
 
+export type Tree<T> = {
+  [id: string]: Node<T>;
+};
 export type Node<T> = {
   id: string;
-  children: Node<T>[];
+  parentId: null | string;
+  childIds: string[];
   data: T;
 };
 
 const Tree = {
-  insertNode<T>(tree: Node<T>[], data: T): Node<T>[] {
-    return [...tree, Tree.newNode(data)];
+  insert<T>(tree: Tree<T>, node: Node<T>): Tree<T> {
+    return { ...tree, [node.id]: node };
   },
 
-  insertChild<T>(tree: Node<T>[], id: string, data: T): Node<T>[] {
-    const found = Tree.find(tree, id);
-    if (!found) return tree;
-    found.children = [...found.children, Tree.newNode(data)];
-    return [...tree];
+  insertChild<T>(
+    tree: Tree<T>,
+    parent: Node<T>,
+    node: Node<T>,
+    position: 'append' | 'prepend' = 'append'
+  ): Tree<T> {
+    if (position === 'append') return Tree.appendChild(tree, parent, node);
+    return Tree.prependChild(tree, parent, node);
   },
 
-  find<T>(tree: Node<T>[], id: string): Node<T> | undefined {
-    return tree.find((node) => {
-      if (node.id === id) return true;
-      if (node.children.length === 0) return false;
-      return Tree.find(node.children, id);
-    });
-  },
-
-  newNode<T>(data: T) {
+  appendChild<T>(tree: Tree<T>, parent: Node<T>, node: Node<T>): Tree<T> {
     return {
-      id: v4(),
-      children: [],
+      ...tree,
+      [parent.id]: {
+        ...parent,
+        childIds: [...parent.childIds, node.id],
+      },
+      [node.id]: {
+        ...node,
+        parentId: parent.id,
+      },
+    };
+  },
+
+  prependChild<T>(tree: Tree<T>, parent: Node<T>, node: Node<T>): Tree<T> {
+    return {
+      ...tree,
+      [parent.id]: {
+        ...parent,
+        childIds: [node.id, ...parent.childIds],
+      },
+      [node.id]: {
+        ...node,
+        parentId: parent.id,
+      },
+    };
+  },
+
+  insertParent<T>(tree: Tree<T>, children: Node<T>[], node: Node<T>) {
+    const parentIds = new Set(children.map((parentId) => parentId));
+    if (parentIds.size > 1) throw 'Children have different parentIds';
+
+    return children.reduce(
+      (newTree, child) => {
+        return {
+          ...newTree,
+          [child.id]: {
+            ...child,
+            parentId: node.id,
+          },
+        };
+      },
+      {
+        ...tree,
+        [node.id]: node,
+      }
+    );
+  },
+
+  find<T>(tree: Tree<T>, id: string): Node<T> | null {
+    return tree[id] || null;
+  },
+
+  createNode<T>({
+    id = v4(),
+    parentId = null,
+    childIds = [],
+    data,
+  }: {
+    id?: string;
+    parentId?: null | string;
+    childIds?: string[];
+    data: T;
+  }): Node<T> {
+    return {
+      id,
+      parentId,
+      childIds,
       data,
     };
   },

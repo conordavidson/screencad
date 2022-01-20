@@ -2,23 +2,21 @@ import Commandline from 'components/commandline';
 import Canvas from 'components/canvas';
 import Sidebar from 'components/sidebar';
 
-import * as GlobalState from 'lib/globalState';
+// import * as GlobalState from 'lib/globalState';
 
 const App = () => {
   return (
-    <GlobalState.Provider>
-      <div className="h-full main-layout">
-        <div className="canvas border-b">
-          <Canvas />
-        </div>
-        <div className="terminal">
-          <Commandline />
-        </div>
-        <div className="sidebar border-l">
-          <Sidebar />
-        </div>
+    <div className="h-full main-layout">
+      <div className="canvas border-b">
+        <Canvas />
       </div>
-    </GlobalState.Provider>
+      <div className="terminal">
+        <Commandline />
+      </div>
+      <div className="sidebar border-l">
+        <Sidebar />
+      </div>
+    </div>
   );
 };
 
