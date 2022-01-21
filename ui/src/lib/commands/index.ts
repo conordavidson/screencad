@@ -1,25 +1,29 @@
-import DefaultCommands from 'lib/commands/default';
-
-// @ts-ignore
-import Yargs from 'https://unpkg.com/yargs@16.0.0-beta.1/browser.mjs';
-import { Argv } from 'yargs';
-
 import * as Types from 'types';
 
-const _createParser = (context: Types.Context): Argv<{}> => {
-  const parser: Argv<{}> = Yargs();
-  DefaultCommands.forEach((command) => command(parser as any, context));
-  return parser;
+import { Argv, Options, ArgumentsCamelCase, InferredOptionTypes } from 'yargs';
+
+export type Command<TArgs extends { [key: string]: Options }> = {
+  command: string;
+  description: string;
+  args: TArgs;
+  handler: (
+    context: Types.Context,
+    args: ArgumentsCamelCase<InferredOptionTypes<TArgs>>
+  ) => Types.Context;
 };
 
-const Commands = {
-  parse: (context: Types.Context, input: string): Types.Context => {
-    const parser = _createParser(context);
-    parser.parse(input, (err: any, argv: any, output: any) => {
-      console.log('err', err, 'argv', argv, 'output', output);
-    });
-    return context;
+const Command = {
+  make<TArgs extends { [key: string]: Options }>(cmd: Command<TArgs>) {
+    return (
+      yargs: Argv<TArgs>,
+      context: Types.Context,
+      callback: (context: Types.Context) => void
+    ) => {
+      yargs.command(cmd.command, cmd.description, cmd.args, (args) => {
+        callback(cmd.handler(context, args));
+      });
+    };
   },
 };
 
-export default Commands;
+export default Command;

@@ -11,6 +11,20 @@ export type Node<T> = {
 };
 
 const Tree = {
+  setData<T>(tree: Tree<T>, node: Node<T>, data: T): Tree<T> {
+    return {
+      ...tree,
+      [node.id]: {
+        ...node,
+        data,
+      },
+    };
+  },
+
+  getChildren<T>(tree: Tree<T>, node: Node<T>): Node<T>[] {
+    return node.childIds.map((childId) => tree[childId]);
+  },
+
   insert<T>(tree: Tree<T>, node: Node<T>): Tree<T> {
     return { ...tree, [node.id]: node };
   },
@@ -53,25 +67,53 @@ const Tree = {
     };
   },
 
-  insertParent<T>(tree: Tree<T>, children: Node<T>[], node: Node<T>) {
-    const parentIds = new Set(children.map((parentId) => parentId));
-    if (parentIds.size > 1) throw 'Children have different parentIds';
+  // child-parent-grand
 
-    return children.reduce(
+  insertParent<T>(tree: Tree<T>, children: Node<T>[], parent: Node<T>): Tree<T> {
+    const parentIds = new Set(children.map((child) => child.parentId));
+    if (parentIds.size > 1) throw 'Children have different parentIds';
+    const [parentId] = parentIds;
+
+    // TODO: This needs to find any nodes that are currently pointing
+    // the children and point them to the new node.
+
+    // const childIds = children.map((child) => child.id);
+
+    // const grandParents = Object.values(tree).filter((node) =>
+    //   node.childIds.some((childId) => childIds.includes(childId))
+    // );
+
+    // return grandParents.reduce((newTree: Tree<T>, grandParent) => {
+    //   return {
+    //     ...newTree,
+    //     [grandParent.id]: {
+    //       ...grandParent,
+    //       childIds: [parentId],
+    //     },
+    //   } as Tree<T>;
+    // }, treeWithChildren);
+
+    const treeWithChildren: Tree<T> = children.reduce(
       (newTree, child) => {
         return {
           ...newTree,
           [child.id]: {
             ...child,
-            parentId: node.id,
+            parentId: parent.id,
           },
         };
       },
       {
         ...tree,
-        [node.id]: node,
+        [parent.id]: {
+          ...parent,
+          parentId: parentId,
+          childIds: children.map((child) => child.id),
+        },
       }
     );
+
+    return treeWithChildren;
   },
 
   find<T>(tree: Tree<T>, id: string): Node<T> | null {

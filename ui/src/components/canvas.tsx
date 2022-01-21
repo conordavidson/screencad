@@ -2,51 +2,48 @@ import { FC } from 'react';
 
 import cx from 'classnames';
 
-import * as GlobalState from 'lib/globalState';
-import * as T from 'types';
+import * as Types from 'types';
+import * as Document from 'lib/document';
 
-// const Node: FC<{ node: T.DomNode }> = ({ node }) => {
-//   const globalState = GlobalState.useGlobalState();
+const Node: FC<{ node: Types.DocumentNode }> = ({ node }) => {
+  const document = Document.useDocument();
+  const selected = document.getSelections();
 
-//   const onClickNode = () => {
-//     globalState.setState((state) => {
-//       const updatedSelected = new Set(state.selected);
-//       if (state.selected.has(node.id)) {
-//         updatedSelected.delete(node.id);
-//       } else {
-//         updatedSelected.add(node.id);
-//       }
-//       return {
-//         ...state,
-//         selected: updatedSelected,
-//       };
-//     });
-//   };
+  const onClickNode = () => {
+    document.toggleSelection(node);
+  };
 
-//   const Tag = node.data.tag;
+  const Tag = node.data.tag;
 
-//   return (
-//     <Tag
-//       onClick={onClickNode}
-//       className={cx('border border-gray-400 w-24 h-24', {
-//         'border-2': globalState.state.selected.has(node.id),
-//       })}
-//     >
-//       {node.children.map((node) => {
-//         return <Node key={node.id} node={node} />;
-//       })}
-//     </Tag>
-//   );
-// };
+  return (
+    <Tag
+      style={node.data.style}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClickNode();
+      }}
+      className={cx('border border-gray-400 min-w-[200px] min-h-[200px]', {
+        'border-2 border-blue-500': selected.has(node),
+      })}
+    >
+      <span className="absolute text-xs text-blue">{node.id.slice(0, 6)}</span>
+      {document.getChildren(node).map((node) => {
+        return <Node key={node.id} node={node} />;
+      })}
+    </Tag>
+  );
+};
 
 const TreeUi: FC = () => {
-  // const globalState = GlobalState.useGlobalState();
+  const document = Document.useDocument();
 
   return (
     <div>
-      {/* {globalState.state.tree.map((node) => {
-        return <Node key={node.id} node={node} />;
-      })} */}
+      {Object.values(document.getTree())
+        .filter((node) => node.parentId === null)
+        .map((node) => {
+          return <Node key={node.id} node={node} />;
+        })}
     </div>
   );
 };

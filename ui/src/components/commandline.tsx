@@ -1,17 +1,13 @@
 import { FC, useState } from 'react';
-import Commands from 'lib/commands';
 
-const context = {
-  document: {},
-  selected: new Set<string>(),
-};
+import * as Document from 'lib/document';
 
 const Commandline: FC = () => {
   const [input, setInput] = useState<string>('');
 
-  const onEnter = (input: string) => {
-    const output = Commands.parse(context, input);
-  };
+  const document = Document.useDocument();
+
+  const onEnter = (input: string) => document.executeCommand(input);
 
   return (
     <div className="h-full w-full grid grid-cols-2">

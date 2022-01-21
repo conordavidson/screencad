@@ -7,17 +7,17 @@ type DocumentNodeData = {
   style: React.CSSProperties;
 };
 
-type DocumentNode = Types.Node<DocumentNodeData>;
-type Document = Types.Tree<DocumentNodeData>;
+export type DocumentNode = Types.Node<DocumentNodeData>;
+export type Document = Types.Tree<DocumentNodeData>;
 
 export type Context = {
-  document: Document;
+  tree: Document;
   selected: Set<string>;
 };
 
 const Context = {
-  getSelections(context: Context): DocumentNode[] {
-    return [...context.selected].map((selectedId) => context.document[selectedId]);
+  getSelections(context: Context): Set<DocumentNode> {
+    return new Set([...context.selected].map((selectedId) => context.tree[selectedId]));
   },
 
   setSelections(context: Context, nodes: DocumentNode[]): Context {
@@ -34,9 +34,23 @@ const Context = {
     };
   },
 
-  removeSelections(context: Context, nodeIds: string[]): Context {
+  removeSelections(context: Context, nodes: DocumentNode[]): Context {
     const selected = new Set(context.selected);
-    nodeIds.forEach((nodeId) => selected.delete(nodeId));
+    nodes.forEach((node) => selected.delete(node.id));
+
+    return {
+      ...context,
+      selected,
+    };
+  },
+
+  toggleSelection(context: Context, node: DocumentNode): Context {
+    const selected = new Set(context.selected);
+    if (context.selected.has(node.id)) {
+      selected.delete(node.id);
+    } else {
+      selected.add(node.id);
+    }
 
     return {
       ...context,
@@ -51,31 +65,38 @@ const Context = {
     return Tree.createNode({ data: { tag: tag, ...attrs } });
   },
 
-  append(context: Context, node: DocumentNode) {
+  append(context: Context, node: DocumentNode): Context {
     return {
       ...context,
-      document: Tree.insert(context.document, node),
+      tree: Tree.insert(context.tree, node),
     };
   },
 
-  appendChild(context: Context, parent: DocumentNode, node: DocumentNode) {
+  appendChild(context: Context, parent: DocumentNode, node: DocumentNode): Context {
     return {
       ...context,
-      document: Tree.appendChild(context.document, parent, node),
+      tree: Tree.appendChild(context.tree, parent, node),
     };
   },
 
-  prependChild(context: Context, parent: DocumentNode, node: DocumentNode) {
+  prependChild(context: Context, parent: DocumentNode, node: DocumentNode): Context {
     return {
       ...context,
-      document: Tree.prependChild(context.document, parent, node),
+      tree: Tree.prependChild(context.tree, parent, node),
     };
   },
 
-  insertParent(context: Context, children: DocumentNode[], parent: DocumentNode) {
+  insertParent(context: Context, children: DocumentNode[], parent: DocumentNode): Context {
     return {
       ...context,
-      document: Tree.insertParent(context.document, children, parent),
+      tree: Tree.insertParent(context.tree, children, parent),
+    };
+  },
+
+  setData(context: Context, node: DocumentNode, data: DocumentNodeData): Context {
+    return {
+      ...context,
+      tree: Tree.setData(context.tree, node, data),
     };
   },
 };
